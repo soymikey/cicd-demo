@@ -16,6 +16,7 @@ const App: FC<Props> = ({ value }) => {
         <img src={logo} className="App-logo" alt="logo" />
         <p>Hello Vite + React!</p>
         <p>feature-v.2.0.0 +++</p>
+        <p>feature-v.3.0.0</p>
         <p>
           <button role="button" type="button" onClick={() => setCount((v) => v + 1)}>
             count is: {count}
