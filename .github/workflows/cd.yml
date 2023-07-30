@@ -22,10 +22,40 @@ jobs:
       - name: Installing Dependencies
         if: steps.cache-dependencies.outputs.cache-hit != 'true'
         run: yarn install
+      - name: Read Version (Main Branch Only)
+        if: startsWith(github.ref, 'refs/heads/main')
+        id: version
+        uses: ashley-taylor/read-json-property-action@v1.0
+        with:
+          path: ./package.json
+          property: version
       - name: Building
         run: |
           yarn build
           zip -r assets ./dist/**
+      - name: Create GitHub Release (Main Branch Only)
+        if: startsWith(github.ref, 'refs/heads/main')
+        id: create_release
+        uses: actions/create-release@v1
+        env:
+          GITHUB_TOKEN: ${{ secrets.PROJECT_ACCESS_TOKEN }}
+        with:
+          tag_name: v${{steps.version.outputs.value}}
+          release_name: v${{steps.version.outputs.value}}
+          draft: false
+          prerelease: false
+
+      - name: Update Release Asset (Main Branch Only)
+        if: startsWith(github.ref, 'refs/heads/main')
+        id: upload-release-asset
+        uses: actions/upload-release-asset@v1
+        env:
+          GITHUB_TOKEN: ${{ secrets.PROJECT_ACCESS_TOKEN }}
+        with:
+          upload_url: ${{ steps.create_release.outputs.upload_url }}
+          asset_path: ./assets.zip
+          asset_name: assets.zip
+          asset_content_type: application/zip
       - name: Upload to Deploy Server
         uses: easingthemes/ssh-deploy@v2.0.7
         env:
@@ -34,4 +64,4 @@ jobs:
           SOURCE: 'dist/'
           REMOTE_HOST: ${{ secrets.REMOTE_HOST }}
           REMOTE_USER: ${{ secrets.REMOTE_USER }}
-          TARGET: '/home/ubuntu/docker_volume/nginxproxymanager/html/cicd'
+          TARGET: ${{  github.ref== 'refs/heads/main'&&'/home/ubuntu/docker_volume/nginxproxymanager/html/cicd'||'/home/ubuntu/docker_volume/nginxproxymanager/html/cicd-staging'}}
