@@ -44,7 +44,6 @@ jobs:
           release_name: v${{steps.version.outputs.value}}
           draft: false
           prerelease: false
-
       - name: Update Release Asset (Main Branch Only)
         if: startsWith(github.ref, 'refs/heads/main')
         id: upload-release-asset
@@ -65,3 +64,7 @@ jobs:
           REMOTE_HOST: ${{ secrets.REMOTE_HOST }}
           REMOTE_USER: ${{ secrets.REMOTE_USER }}
           TARGET: ${{  github.ref== 'refs/heads/main'&&'/home/ubuntu/docker_volume/nginxproxymanager/html/cicd'||'/home/ubuntu/docker_volume/nginxproxymanager/html/cicd-staging'}}
+  E2E-Test:
+    uses: ./.github/workflows/e2e-test.yml
+    needs: [CD]
+    secrets: inherit

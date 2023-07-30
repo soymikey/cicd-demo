@@ -5,6 +5,10 @@ on:
       version:
         description: 'choose a version to deploy'
         required: true
+      E2ETest:
+        description: 'enable to run e2e test'
+        default: true
+        type: boolean
 jobs:
   Rollback:
     runs-on: ubuntu-latest
@@ -34,3 +38,8 @@ jobs:
           REMOTE_HOST: ${{ secrets.REMOTE_HOST }}
           REMOTE_USER: ${{secrets.REMOTE_USER}}
           TARGET: ${{  github.ref== 'refs/heads/main'&&'/home/ubuntu/docker_volume/nginxproxymanager/html/cicd'||'/home/ubuntu/docker_volume/nginxproxymanager/html/cicd-staging'}}
+  E2E-Test:
+    uses: ./.github/workflows/e2e-test.yml
+    needs: [Rollback]
+    if: github.event.inputs.E2ETest == true
+    secrets: inherit
