@@ -1,0 +1,36 @@
+name: Rollback
+on:
+  workflow_dispatch:
+    inputs:
+      version:
+        description: 'choose a version to deploy'
+        required: true
+jobs:
+  Rollback:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Echo Input
+        env:
+          VERSION: ${{ github.event.inputs.version }}
+        run: |
+          echo "Version: $VERSION"
+          echo "Running E2E Test: ${{ github.event.inputs.E2ETest }}"
+      - name: Download Artifact
+        uses: dsaltares/fetch-gh-release-asset@master
+        with:
+          version: 'tags/${{ github.event.inputs.version }}'
+          file: 'assets.zip'
+          token: ${{ secrets.GITHUB_TOKEN }}
+      - name: Unzip
+        run: |
+          unzip assets.zip
+          ls -a ./dist
+      - name: Upload to Deploy Server
+        uses: easingthemes/ssh-deploy@v2.0.7
+        env:
+          SSH_PRIVATE_KEY: ${{ secrets.DEPLOY_TOKEN }}
+          ARGS: '-avzr --delete'
+          SOURCE: 'dist/'
+          REMOTE_HOST: ${{ secrets.REMOTE_HOST }}
+          REMOTE_USER: ${{secrets.REMOTE_USER}}
+          TARGET: ${{  github.ref== 'refs/heads/main'&&'/home/ubuntu/docker_volume/nginxproxymanager/html/cicd'||'/home/ubuntu/docker_volume/nginxproxymanager/html/cicd-staging'}}
