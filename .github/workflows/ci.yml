@@ -1,0 +1,30 @@
+name: CI
+on:
+  pull_request:
+    branches: [main, staging]
+jobs:
+  CI:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Use Node.js
+        uses: actions/setup-node@v3
+        with:
+          # vite needs node>=12
+          # puppeteer needs node>=14.1.0
+          node-version: '16.x'
+      - name: Checkout repository
+        uses: actions/checkout@v2
+      - name: Cache
+        id: cache-dependencies
+        uses: actions/cache@v3
+        with:
+          path: |
+            **/node_modules
+          key: ${{runner.OS}}-${{hashFiles('**/yarn.lock')}}
+      - name: Installing Dependencies
+        if: steps.cache-dependencies.outputs.cache-hit != 'true'
+        run: yarn install
+      - name: Running Lint
+        run: yarn lint
+      - name: Running Test
+        run: yarn test
